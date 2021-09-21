@@ -1,4 +1,3 @@
-using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -10,10 +9,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using OnlineWatchShop.DAL.Contracts;
 using OnlineWatchShop.DAL.Implementations;
-using OnlineWatchShop.Profiles;
 using OnlineWatchShop.Web.Contracts;
-using OnlineWatchShop.Web.Helpers;
 using OnlineWatchShop.Web.Implementations;
+using System.Text;
+using OnlineWatchShop.Web.Helpers;
+using OnlineWatchShop.Web.Profiles;
 
 namespace OnlineWatchShop.Web
 {
@@ -27,40 +27,42 @@ namespace OnlineWatchShop.Web
 
 		public void ConfigureServices(IServiceCollection services)
 		{
+			services.AddControllers();
+
 			services.AddDbContext<DataContext>(options =>
 				options.UseSqlServer(_configuration.GetConnectionString("DefaultString")),
 				ServiceLifetime.Transient);
 
-			//var appSettingsSection = _configuration.GetSection("AuthSettings");
-			//services.Configure<AuthSettings>(appSettingsSection);
+			var jwtConfigurationSection = _configuration.GetSection("JwtConfiguration");
+			services.Configure<JwtConfiguration>(jwtConfigurationSection);
 
-			// configure JWT authentication
-			//var authSettings = appSettingsSection.Get<AuthSettings>();
-			//var key = Encoding.ASCII.GetBytes(authSettings.Key);
+			var jwtConfiguration = jwtConfigurationSection.Get<JwtConfiguration>();
+			var key = Encoding.ASCII.GetBytes(jwtConfiguration.Key);
 
 			services.AddAuthentication(options =>
 				{
 					options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 					options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 				})
+				//.AddCookie(options =>
+				//	{
+				//		options.LoginPath = "/api/login";
+				//		//options.AccessDeniedPath = "api/forbidden";
+				//	}
+				//)
 				.AddJwtBearer(options =>
-				{
-					options.RequireHttpsMetadata = false;
-					options.SaveToken = true;
-					options.TokenValidationParameters = new TokenValidationParameters()
 					{
-						ValidateIssuerSigningKey = true,
-						IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes("efefefefefefefefefefefsafdasdfadsfasdfadsfasdfasdfdas")),
-						//ValidateIssuer = true,
-						//ValidIssuer = authSettings.Issuer,
-						//ValidateAudience = false,
-						//ValidAudience = authSettings.Audience,
-						ValidateLifetime = true
-					};
-				}
-			);
-
-			services.AddControllers();
+						options.RequireHttpsMetadata = false;
+						options.SaveToken = true;
+						options.TokenValidationParameters = new TokenValidationParameters
+						{
+							ValidateIssuerSigningKey = true,
+							IssuerSigningKey = new SymmetricSecurityKey(key),
+							ValidateIssuer = false,
+							ValidateAudience = false
+						};
+					}
+				);
 
 			var mapperConfig = new MapperConfiguration(mc =>
 			{
@@ -93,6 +95,7 @@ namespace OnlineWatchShop.Web
 
 			app.UseRouting();
 
+			app.UseAuthentication();
 			app.UseAuthorization();
 
 			app.UseEndpoints(endpoints =>

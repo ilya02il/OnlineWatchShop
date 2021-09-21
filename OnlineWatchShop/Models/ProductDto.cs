@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using OnlineWatchShop.DAL.Contracts.Entities;
+using System.Collections.Generic;
 
-namespace OnlineWatchShop.DAL.Contracts.Entities
+namespace OnlineWatchShop.Web.Models
 {
-	public class ProductEntity : IEntity
+	public class ProductDto
 	{
 		public int Id { get; set; }
 
@@ -14,10 +15,6 @@ namespace OnlineWatchShop.DAL.Contracts.Entities
 		public int Warranty { get; set; }
 		public string TargetGender { get; set; }
 
-		public ICollection<OrderProductEntity> OrderProduct
-		{
-			get;
-			set;
-		} = new List<OrderProductEntity>();
+		public ICollection<OrderProductEntity> OrderProduct { get; set; }
 	}
 }

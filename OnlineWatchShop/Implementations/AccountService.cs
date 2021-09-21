@@ -8,56 +8,37 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using OnlineWatchShop.Web.Helpers;
 
 namespace OnlineWatchShop.Web.Implementations
 {
 	public class AccountService : IAccountService
 	{
 		private readonly IDbRepository _dbRepository;
-		//private readonly AuthSettings _authSettings;
+		private readonly JwtConfiguration _jwtConfiguration;
 
-		public AccountService(IDbRepository dbRepository)
+		public AccountService(IDbRepository dbRepository, IOptions<JwtConfiguration> jwtConfigurationOptions)
 		{
 			_dbRepository = dbRepository;
-			//_authSettings = authSettings;
+			_jwtConfiguration = jwtConfigurationOptions.Value;
 		}
 
-		public async Task<string> Login(LoginModel model)
+		public async Task<object> Login(LoginModel model)
 		{
 			//var userEntity = await _dbRepository.GetAll<UserEntity>()
 			//	.FirstOrDefaultAsync(user =>
 			//		user.Login == model.Login &&
 			//		user.HashedPassword == Hasher.HashPassword(model.Password, user.Salt));
 
-			//var claims = new List<Claim>()
-			//{
-			//	new(ClaimsIdentity.DefaultNameClaimType, userEntity.Login),
-			//	new(ClaimsIdentity.DefaultRoleClaimType, userEntity.Role.Name)
-			//};
+			//if (userEntity == null)
+			//	return null;
 
-			var claims = new List<Claim>()
+			return new
 			{
-				new(ClaimsIdentity.DefaultNameClaimType, model.Login),
-				//new(ClaimsIdentity.DefaultRoleClaimType, model.Role.Name)
+				token = GenerateJwtToken(model),
+				//username = claimsIdentity.Name
 			};
-
-			var claimsIdentity = new ClaimsIdentity(claims, "Token",
-				ClaimsIdentity.DefaultNameClaimType,
-				ClaimsIdentity.DefaultRoleClaimType);
-
-			var jwtToken = new JwtSecurityToken(
-				//issuer: _authSettings.Issuer,
-				//audience: _authSettings.Audience,
-				notBefore: DateTime.Now,
-				claims: claimsIdentity.Claims,
-				expires: DateTime.Now.Add(TimeSpan.FromMinutes(1)),
-				signingCredentials: new SigningCredentials(
-					new SymmetricSecurityKey(Encoding.ASCII.GetBytes("efefefefefefefefefefefsafdasdfadsfasdfadsfasdfasdfdas")),
-					SecurityAlgorithms.HmacSha256)
-			);
-
-			return null;
-			//return new JwtSecurityTokenHandler().WriteToken(jwtToken);
 		}
 
 		public async Task<bool> Register(RegisterModel model)
@@ -85,7 +66,37 @@ namespace OnlineWatchShop.Web.Implementations
 
 		public Task Authenticate(string login)
 		{
-			throw new System.NotImplementedException();
+			throw new NotImplementedException();
+		}
+
+		private string GenerateJwtToken(LoginModel model)
+		{
+			// generate token that is valid for 7 days
+			var tokenHandler = new JwtSecurityTokenHandler();
+			var key = Encoding.ASCII.GetBytes(_jwtConfiguration.Key);
+
+			var claims = new List<Claim>()
+			{
+				new(ClaimsIdentity.DefaultNameClaimType, model.Login),
+				//new(ClaimsIdentity.DefaultRoleClaimType, model.Role.Name)
+			};
+
+			var claimsIdentity = new ClaimsIdentity(claims, "Token",
+				ClaimsIdentity.DefaultNameClaimType,
+				ClaimsIdentity.DefaultRoleClaimType);
+
+			var tokenDescriptor = new SecurityTokenDescriptor
+			{
+				Subject = claimsIdentity,
+				Expires = DateTime.UtcNow.AddMinutes(_jwtConfiguration.Lifetime),
+				SigningCredentials = new SigningCredentials(
+					new SymmetricSecurityKey(key),
+					SecurityAlgorithms.HmacSha256Signature)
+			};
+
+			var token = tokenHandler.CreateToken(tokenDescriptor);
+
+			return tokenHandler.WriteToken(token);
 		}
 	}
 }

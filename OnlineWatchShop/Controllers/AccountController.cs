@@ -27,13 +27,7 @@ namespace OnlineWatchShop.Web.Controllers
 			if (token == null)
 				return Unauthorized();
 
-			return Ok(new
-			{
-				data = new
-				{
-					token
-				}
-			});
+			return new JsonResult(token);
 		}
 
 		[HttpPost]

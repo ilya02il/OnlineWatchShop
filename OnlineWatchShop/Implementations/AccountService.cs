@@ -1,15 +1,15 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Hashing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using OnlineWatchShop.DAL.Contracts;
+using OnlineWatchShop.DAL.Contracts.Entities;
 using OnlineWatchShop.Web.Contracts;
+using OnlineWatchShop.Web.Helpers;
 using OnlineWatchShop.Web.Models;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
-using OnlineWatchShop.Web.Helpers;
 
 namespace OnlineWatchShop.Web.Implementations
 {
@@ -17,86 +17,178 @@ namespace OnlineWatchShop.Web.Implementations
 	{
 		private readonly IDbRepository _dbRepository;
 		private readonly JwtConfiguration _jwtConfiguration;
+		private readonly IJwtUtils _jwtUtils;
 
-		public AccountService(IDbRepository dbRepository, IOptions<JwtConfiguration> jwtConfigurationOptions)
+		public AccountService(IDbRepository dbRepository, IOptions<JwtConfiguration> jwtConfigurationOptions,
+			IJwtUtils jwtUtils)
 		{
 			_dbRepository = dbRepository;
+			_jwtUtils = jwtUtils;
 			_jwtConfiguration = jwtConfigurationOptions.Value;
 		}
 
-		public async Task<object> Login(LoginModel model)
+		public async Task<AuthenticateResponseModel> Authenticate(LoginModel model, string ipAddress)
 		{
-			//var userEntity = await _dbRepository.GetAll<UserEntity>()
-			//	.FirstOrDefaultAsync(user =>
-			//		user.Login == model.Login &&
-			//		user.HashedPassword == Hasher.HashPassword(model.Password, user.Salt));
+			var userEntity = await _dbRepository.GetAllInclude<UserEntity>(user => user.Role)
+				.FirstOrDefaultAsync(user =>
+					user.Login == model.Login);
 
-			//if (userEntity == null)
-			//	return null;
+			if (userEntity == null)
+				return null;
 
-			return new
+			if (userEntity.HashedPassword != Hasher.HashPassword(model.Password, userEntity.Salt))
+				return null;
+
+			var accessToken = _jwtUtils.GenerateJwtToken(userEntity);
+			var refreshToken = _jwtUtils.GenerateRefreshToken(ipAddress);
+
+			refreshToken.UserId = userEntity.Id;
+			_dbRepository.Add(refreshToken);
+
+			await RemoveOldRefreshTokens(userEntity.Id);
+
+			await _dbRepository.SaveChangesAsync();
+
+			return new AuthenticateResponseModel()
 			{
-				token = GenerateJwtToken(model),
-				//username = claimsIdentity.Name
+				AccessToken = accessToken,
+				RefreshToken = refreshToken.Token,
+				Username = userEntity.Login,
+				AccessTokenExpiry = DateTime.Now.AddMinutes(10)
 			};
 		}
 
 		public async Task<bool> Register(RegisterModel model)
 		{
-			//var userEntity = await _dbRepository.GetAll<UserEntity>()
-			//	.FirstOrDefaultAsync(user => user.Login == model.Login);
+			var userEntity = await _dbRepository.GetAll<UserEntity>()
+				.FirstOrDefaultAsync(user => user.Login == model.Login);
 
-			//if (userEntity != null) return false;
+			if (userEntity != null) return false;
 
-			//var salt = Hasher.GenerateSalt(20);
+			var salt = Hasher.GenerateSalt(20);
 
-			//var newUserEntity = new UserEntity()
-			//{
-			//	Login = model.Login,
-			//	Salt = salt,
-			//	HashedPassword = Hasher.HashPassword(model.Password, salt),
-			//	RoleId = 2
-			//};
+			var newUserEntity = new UserEntity()
+			{
+				Login = model.Login,
+				Salt = salt,
+				HashedPassword = Hasher.HashPassword(model.Password, salt),
+				RoleId = 2
+			};
 
-			//_dbRepository.Add(newUserEntity);
-			//await _dbRepository.SaveChangesAsync();
+			_dbRepository.Add(newUserEntity);
+			await _dbRepository.SaveChangesAsync();
 
 			return true;
 		}
 
-		public Task Authenticate(string login)
+		public async Task<AuthenticateResponseModel> RefreshToken(string token, string ipAddress)
 		{
-			throw new NotImplementedException();
+			var refreshToken = _dbRepository.GetAll<RefreshTokenEntity>()
+				.ToList().Single(t => t.Token == token);
+			var userEntity = GetUserByRefreshToken(token);
+
+
+			if (refreshToken.IsRevoked)
+			{
+				RevokeDescendantRefreshTokens(refreshToken, userEntity, ipAddress, $"Attempted reuse of revoked ancestor token: {token}");
+				_dbRepository.SaveChanges();
+			}
+
+			if (!refreshToken.IsActive)
+				throw new Exception("Invalid token");
+
+			var newRefreshToken = RotateRefreshToken(refreshToken, ipAddress);
+			newRefreshToken.UserId = userEntity.Id;
+
+			_dbRepository.Add(newRefreshToken);
+
+			await RemoveOldRefreshTokens(userEntity.Id);
+
+			await _dbRepository.SaveChangesAsync();
+
+			var jwtToken = _jwtUtils.GenerateJwtToken(userEntity);
+
+			return new AuthenticateResponseModel()
+			{
+				Username = userEntity.Login,
+				AccessToken = jwtToken,
+				RefreshToken = newRefreshToken.Token,
+				AccessTokenExpiry = DateTime.Now.AddMinutes(10)
+			};
 		}
 
-		private string GenerateJwtToken(LoginModel model)
+		public void RevokeToken(string token, string ipAddress)
 		{
-			// generate token that is valid for 7 days
-			var tokenHandler = new JwtSecurityTokenHandler();
-			var key = Encoding.ASCII.GetBytes(_jwtConfiguration.Key);
+			var refreshToken = _dbRepository.GetAll<RefreshTokenEntity>()
+				.ToList().Single(t => t.Token == token);
 
-			var claims = new List<Claim>()
-			{
-				new(ClaimsIdentity.DefaultNameClaimType, model.Login),
-				//new(ClaimsIdentity.DefaultRoleClaimType, model.Role.Name)
-			};
+			if (!refreshToken.IsActive)
+				throw new Exception("Invalid token");
 
-			var claimsIdentity = new ClaimsIdentity(claims, "Token",
-				ClaimsIdentity.DefaultNameClaimType,
-				ClaimsIdentity.DefaultRoleClaimType);
+			// revoke token and save
+			RevokeRefreshToken(refreshToken, ipAddress, "Revoked without replacement");
 
-			var tokenDescriptor = new SecurityTokenDescriptor
-			{
-				Subject = claimsIdentity,
-				Expires = DateTime.UtcNow.AddMinutes(_jwtConfiguration.Lifetime),
-				SigningCredentials = new SigningCredentials(
-					new SymmetricSecurityKey(key),
-					SecurityAlgorithms.HmacSha256Signature)
-			};
+			_dbRepository.SaveChanges();
+		}
 
-			var token = tokenHandler.CreateToken(tokenDescriptor);
+		public UserEntity GetById(int id)
+		{
+			var user = _dbRepository.Get<UserEntity>(u => u.Id == id)
+				.FirstOrDefault();
+			if (user == null) throw new KeyNotFoundException("User not found");
+			return user;
+		}
 
-			return tokenHandler.WriteToken(token);
+		private void RevokeDescendantRefreshTokens(RefreshTokenEntity refreshToken, UserEntity user, string ipAddress, string reason)
+		{
+			// recursively traverse the refresh token chain and ensure all descendants are revoked
+			if (string.IsNullOrEmpty(refreshToken.ReplaceByToken)) return;
+
+			var childToken = _dbRepository.GetAll<RefreshTokenEntity>()
+				.Where(rt => rt.UserId == user.Id)
+				.SingleOrDefault(x => x.Token == refreshToken.ReplaceByToken);
+
+			if (childToken == null) 
+				return;
+
+			if (childToken.IsActive)
+				RevokeRefreshToken(childToken, ipAddress, reason);
+			else
+				RevokeDescendantRefreshTokens(childToken, user, ipAddress, reason);
+		}
+
+		private void RevokeRefreshToken(RefreshTokenEntity token, string ipAddress, string reason = null, string replacedByToken = null)
+		{
+			token.Revoked = DateTime.UtcNow;
+			token.RevokedByIp = ipAddress;
+			token.ReasonRevoked = reason;
+			token.ReplaceByToken = replacedByToken;
+
+			_dbRepository.Update(token);
+		}
+
+		private async Task RemoveOldRefreshTokens(int userId)
+		{
+			// remove old inactive refresh tokens from user based on TTL in app settings
+			await _dbRepository.Remove<RefreshTokenEntity>(entity =>
+				entity.UserId == userId &&
+				!entity.IsActive &&
+				entity.Created.AddMinutes(_jwtConfiguration.Lifetime) <= DateTime.UtcNow);
+		}
+
+		private RefreshTokenEntity RotateRefreshToken(RefreshTokenEntity refreshToken, string ipAddress)
+		{
+			var newRefreshToken = _jwtUtils.GenerateRefreshToken(ipAddress);
+			RevokeRefreshToken(refreshToken, ipAddress, "Replaced by new token", newRefreshToken.Token);
+			return newRefreshToken;
+		}
+		private UserEntity GetUserByRefreshToken(string token)
+		{
+			var userEntity = _dbRepository.GetAllInclude<UserEntity>(u => u.Role)
+			.SingleOrDefault(user => user.RefreshTokens
+			.Any(t => t.Token == token));
+				
+			return userEntity;
 		}
 	}
 }

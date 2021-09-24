@@ -20,12 +20,12 @@ namespace OnlineWatchShop.Web.Implementations
 			_mapper = mapper;
 		}
 
-		public IEnumerable<ProductDto> GetAll()
+		public IEnumerable<ProductModel> GetAll()
 		{
 			//var productsEntities = _dbRepository.GetAll<ProductEntity>();
 			//var productsDto = _mapper.Map<List<ProductDto>>(productsEntities);
 
-			var productsDto = new List<ProductDto>()
+			var productsDto = new List<ProductModel>()
 			{
 				new()
 				{
@@ -42,16 +42,16 @@ namespace OnlineWatchShop.Web.Implementations
 			return productsDto;
 		}
 
-		public ProductDto GetSingle(int id)
+		public ProductModel GetSingle(int id)
 		{
 			var productEntity = _dbRepository.GetAll<ProductEntity>()
 				.FirstOrDefault(e => e.Id == id);
-			var productDto = _mapper.Map<ProductDto>(productEntity);
+			var productDto = _mapper.Map<ProductModel>(productEntity);
 
 			return productDto;
 		}
 
-		public async Task<int> Add(ProductDto newProduct)
+		public async Task<int> Add(ProductModel newProduct)
 		{
 			var productEntity = _mapper.Map<ProductEntity>(newProduct);
 
@@ -61,7 +61,7 @@ namespace OnlineWatchShop.Web.Implementations
 			return newId;
 		}
 
-		public async Task<ProductDto> Update(ProductDto productDto)
+		public async Task<ProductModel> Update(ProductModel productDto)
 		{
 			var productEntity = _mapper.Map<ProductEntity>(productDto);
 

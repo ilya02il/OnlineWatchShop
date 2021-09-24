@@ -6,10 +6,10 @@ namespace OnlineWatchShop.Web.Contracts
 {
 	public interface IProductService
 	{
-		IEnumerable<ProductDto> GetAll();
-		ProductDto GetSingle(int id);
-		Task<int> Add(ProductDto newProduct);
-		Task<ProductDto> Update(ProductDto productDto);
+		IEnumerable<ProductModel> GetAll();
+		ProductModel GetSingle(int id);
+		Task<int> Add(ProductModel newProduct);
+		Task<ProductModel> Update(ProductModel productDto);
 		Task<int> Delete(int id);
 	}
 }

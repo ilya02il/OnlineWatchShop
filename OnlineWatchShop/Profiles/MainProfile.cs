@@ -9,10 +9,10 @@ namespace OnlineWatchShop.Web.Profiles
 	{
 		public MainProfile()
 		{
-			CreateMap<ProductEntity, ProductDto>();
-			CreateMap<ProductDto, ProductEntity>();
-			CreateMap<List<ProductEntity>, List<ProductDto>>();
-			CreateMap<List<ProductDto>, List<ProductEntity>>();
+			CreateMap<ProductEntity, ProductModel>();
+			CreateMap<ProductModel, ProductEntity>();
+			CreateMap<List<ProductEntity>, List<ProductModel>>();
+			CreateMap<List<ProductModel>, List<ProductEntity>>();
 		}
 	}
 }

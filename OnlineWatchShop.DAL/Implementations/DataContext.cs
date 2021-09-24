@@ -8,6 +8,7 @@ namespace OnlineWatchShop.DAL.Implementations
 	public class DataContext : DbContext
 	{
 		public DbSet<UserEntity> Users { get; set; }
+		public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
 		public DbSet<RoleEntity> Roles { get; set; }
 		public DbSet<ProductEntity> Products { get; set; }
 		public DbSet<StoredProductEntity> StoredProducts { get; set; }

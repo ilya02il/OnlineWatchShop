@@ -1,18 +1,16 @@
 using AutoMapper;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Tokens;
 using OnlineWatchShop.DAL.Contracts;
 using OnlineWatchShop.DAL.Implementations;
 using OnlineWatchShop.Web.Contracts;
-using OnlineWatchShop.Web.Implementations;
-using System.Text;
 using OnlineWatchShop.Web.Helpers;
+using OnlineWatchShop.Web.Implementations;
+using OnlineWatchShop.Web.Middleware;
 using OnlineWatchShop.Web.Profiles;
 
 namespace OnlineWatchShop.Web
@@ -33,36 +31,36 @@ namespace OnlineWatchShop.Web
 				options.UseSqlServer(_configuration.GetConnectionString("DefaultString")),
 				ServiceLifetime.Transient);
 
-			var jwtConfigurationSection = _configuration.GetSection("JwtConfiguration");
-			services.Configure<JwtConfiguration>(jwtConfigurationSection);
+			//var jwtConfigurationSection = _configuration.GetSection("JwtConfiguration");
+			services.Configure<JwtConfiguration>(_configuration.GetSection("JwtConfiguration"));
 
-			var jwtConfiguration = jwtConfigurationSection.Get<JwtConfiguration>();
-			var key = Encoding.ASCII.GetBytes(jwtConfiguration.Key);
+			//var jwtConfiguration = jwtConfigurationSection.Get<JwtConfiguration>();
+			//var key = Encoding.ASCII.GetBytes(jwtConfiguration.Key);
 
-			services.AddAuthentication(options =>
-				{
-					options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-					options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-				})
-				//.AddCookie(options =>
-				//	{
-				//		options.LoginPath = "/api/login";
-				//		//options.AccessDeniedPath = "api/forbidden";
-				//	}
-				//)
-				.AddJwtBearer(options =>
-					{
-						options.RequireHttpsMetadata = false;
-						options.SaveToken = true;
-						options.TokenValidationParameters = new TokenValidationParameters
-						{
-							ValidateIssuerSigningKey = true,
-							IssuerSigningKey = new SymmetricSecurityKey(key),
-							ValidateIssuer = false,
-							ValidateAudience = false
-						};
-					}
-				);
+			//services.AddAuthentication(options =>
+			//	{
+			//		options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+			//		options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+			//	})
+			//	//.AddCookie(options =>
+			//	//	{
+			//	//		options.LoginPath = "/api/login";
+			//	//		//options.AccessDeniedPath = "api/forbidden";
+			//	//	}
+			//	//)
+			//	.AddJwtBearer(options =>
+			//		{
+			//			options.RequireHttpsMetadata = false;
+			//			options.SaveToken = true;
+			//			options.TokenValidationParameters = new TokenValidationParameters
+			//			{
+			//				ValidateIssuerSigningKey = true,
+			//				IssuerSigningKey = new SymmetricSecurityKey(key),
+			//				ValidateIssuer = false,
+			//				ValidateAudience = false
+			//			};
+			//		}
+			//	);
 
 			var mapperConfig = new MapperConfiguration(mc =>
 			{
@@ -74,6 +72,7 @@ namespace OnlineWatchShop.Web
 			services.AddSingleton(mapper);
 			services.AddTransient<IAccountService, AccountService>();
 			services.AddTransient<IProductService, ProductService>();
+			services.AddTransient<IJwtUtils, JwtUtils>();
 			services.AddScoped<IDbRepository, DbRepository>();
 			//services.AddSwaggerGen(c =>
 			//{
@@ -95,8 +94,10 @@ namespace OnlineWatchShop.Web
 
 			app.UseRouting();
 
-			app.UseAuthentication();
-			app.UseAuthorization();
+			//app.UseAuthentication();
+			//app.UseAuthorization();
+
+			app.UseMiddleware<JwtMiddleware>();
 
 			app.UseEndpoints(endpoints =>
 			{

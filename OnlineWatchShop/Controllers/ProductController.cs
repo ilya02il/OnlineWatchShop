@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using OnlineWatchShop.Web.Contracts;
+using OnlineWatchShop.Web.Attributes;
 
 namespace OnlineWatchShop.Web.Controllers
 {
-	[Authorize(AuthenticationSchemes =
-		JwtBearerDefaults.AuthenticationScheme)]
+	[Authorize]
 	[ApiController]
 	public class ProductController : ControllerBase
 	{

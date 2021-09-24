@@ -1,4 +1,6 @@
-﻿namespace OnlineWatchShop.DAL.Contracts.Entities
+﻿using System.Collections.Generic;
+
+namespace OnlineWatchShop.DAL.Contracts.Entities
 {
 	public class UserEntity : IEntity
 	{
@@ -10,5 +12,11 @@
 
 		public int RoleId { get; set; }
 		public RoleEntity Role { get; set; }
+
+		public ICollection<RefreshTokenEntity> RefreshTokens
+		{
+			get;
+			set;
+		} = new List<RefreshTokenEntity>();
 	}
 }

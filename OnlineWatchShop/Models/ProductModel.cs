@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace OnlineWatchShop.Web.Models
 {
-	public class ProductDto
+	public class ProductModel
 	{
 		public int Id { get; set; }
 

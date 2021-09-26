@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OnlineWatchShop.DAL.Contracts.Entities
 {
@@ -14,10 +15,22 @@ namespace OnlineWatchShop.DAL.Contracts.Entities
 		public int Warranty { get; set; }
 		public string TargetGender { get; set; }
 
-		public ICollection<OrderProductEntity> OrderProduct
+		public ICollection<OrderProductEntity> OrderProducts
 		{
 			get;
 			set;
 		} = new List<OrderProductEntity>();
+
+		[InverseProperty("Product")]
+		public virtual ICollection<CartProductEntity> CartProducts
+		{
+			get;
+			set;
+		} = new List<CartProductEntity>();
+		public ICollection<ImageEntity> Images
+		{
+			get;
+			set;
+		} = new List<ImageEntity>();
 	}
 }

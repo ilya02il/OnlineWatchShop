@@ -10,7 +10,7 @@ using OnlineWatchShop.DAL.Implementations;
 namespace OnlineWatchShop.DAL.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20210922055737_InitMigration")]
+    [Migration("20210926061152_InitMigration")]
     partial class InitMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -20,6 +20,68 @@ namespace OnlineWatchShop.DAL.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("ProductVersion", "5.0.10")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.CartEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Carts");
+                });
+
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.CartProductEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("CartProducts");
+                });
+
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.ImageEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Url")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("Images");
+                });
 
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.OrderEntity", b =>
                 {
@@ -31,14 +93,9 @@ namespace OnlineWatchShop.DAL.Migrations
                     b.Property<int>("PersonId")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("PersonId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Orders");
                 });
@@ -68,15 +125,12 @@ namespace OnlineWatchShop.DAL.Migrations
                     b.ToTable("OrderProducts");
                 });
 
-            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.PersonEntity", b =>
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.PersonalDataEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<DateTime>("BirthDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -90,16 +144,13 @@ namespace OnlineWatchShop.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("SecondPhone")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Surname")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Persons");
+                    b.ToTable("PersonalData");
                 });
 
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.ProductEntity", b =>
@@ -135,7 +186,7 @@ namespace OnlineWatchShop.DAL.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.RefreshToken", b =>
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.RefreshTokenEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -150,6 +201,15 @@ namespace OnlineWatchShop.DAL.Migrations
 
                     b.Property<DateTime>("Expires")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsExpired")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
 
                     b.Property<string>("ReasonRevoked")
                         .HasColumnType("nvarchar(max)");
@@ -199,33 +259,8 @@ namespace OnlineWatchShop.DAL.Migrations
                         new
                         {
                             Id = 2,
-                            Name = "AuthorizedUser"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "NonAuthorizedUser"
+                            Name = "User"
                         });
-                });
-
-            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.StoredProductEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int>("Amount")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("StoredProducts");
                 });
 
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.UserEntity", b =>
@@ -254,35 +289,68 @@ namespace OnlineWatchShop.DAL.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.OrderEntity", b =>
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.CartEntity", b =>
                 {
-                    b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.PersonEntity", "Person")
-                        .WithMany("Orders")
-                        .HasForeignKey("PersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.UserEntity", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Person");
-
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.CartProductEntity", b =>
+                {
+                    b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.CartEntity", "Cart")
+                        .WithMany("CartProducts")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.ProductEntity", "Product")
+                        .WithMany("CartProducts")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.ImageEntity", b =>
+                {
+                    b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.ProductEntity", "Product")
+                        .WithMany("Images")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.OrderEntity", b =>
+                {
+                    b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.PersonalDataEntity", "Person")
+                        .WithMany("Orders")
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.OrderProductEntity", b =>
                 {
                     b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.OrderEntity", "Order")
-                        .WithMany("OrderProduct")
+                        .WithMany("OrderProducts")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.ProductEntity", "Product")
-                        .WithMany("OrderProduct")
+                        .WithMany("OrderProducts")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -292,7 +360,7 @@ namespace OnlineWatchShop.DAL.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.RefreshToken", b =>
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.RefreshTokenEntity", b =>
                 {
                     b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.UserEntity", "User")
                         .WithMany("RefreshTokens")
@@ -301,17 +369,6 @@ namespace OnlineWatchShop.DAL.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.StoredProductEntity", b =>
-                {
-                    b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.ProductEntity", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.UserEntity", b =>
@@ -325,19 +382,28 @@ namespace OnlineWatchShop.DAL.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.OrderEntity", b =>
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.CartEntity", b =>
                 {
-                    b.Navigation("OrderProduct");
+                    b.Navigation("CartProducts");
                 });
 
-            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.PersonEntity", b =>
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.OrderEntity", b =>
+                {
+                    b.Navigation("OrderProducts");
+                });
+
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.PersonalDataEntity", b =>
                 {
                     b.Navigation("Orders");
                 });
 
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.ProductEntity", b =>
                 {
-                    b.Navigation("OrderProduct");
+                    b.Navigation("CartProducts");
+
+                    b.Navigation("Images");
+
+                    b.Navigation("OrderProducts");
                 });
 
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.RoleEntity", b =>

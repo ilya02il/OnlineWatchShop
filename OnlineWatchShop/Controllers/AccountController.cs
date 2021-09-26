@@ -14,12 +14,10 @@ namespace OnlineWatchShop.Web.Controllers
 	public class AccountController : ControllerBase
 	{
 		private readonly IAccountService _accountService;
-		//private readonly AuthSettings _authSettings;
 
 		public AccountController(IAccountService accountService)
 		{
 			_accountService = accountService;
-			//_authSettings = authSettings;
 		}
 
 		[AllowAnonymous]
@@ -60,7 +58,6 @@ namespace OnlineWatchShop.Web.Controllers
 		[HttpPost("logout")]
 		public IActionResult RevokeToken()
 		{
-			// accept refresh token in request body or cookie
 			var token = Request.Cookies["refreshToken"];
 
 			if (string.IsNullOrEmpty(token))
@@ -76,7 +73,6 @@ namespace OnlineWatchShop.Web.Controllers
 
 		private void SetTokenCookie(string token)
 		{
-			// append cookie with refresh token to the http response
 			var cookieOptions = new CookieOptions
 			{
 				HttpOnly = true,
@@ -92,7 +88,6 @@ namespace OnlineWatchShop.Web.Controllers
 
 		private string IpAddress()
 		{
-			// get source ip address for the current request
 			if (Request.Headers.ContainsKey("X-Forwarded-For"))
 				return Request.Headers["X-Forwarded-For"];
 

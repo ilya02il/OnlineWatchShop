@@ -43,7 +43,7 @@ namespace OnlineWatchShop.Web.Implementations
 			var refreshToken = _jwtUtils.GenerateRefreshToken(ipAddress);
 
 			refreshToken.UserId = userEntity.Id;
-			_dbRepository.Add(refreshToken);
+			await _dbRepository.Add(refreshToken);
 
 			await RemoveOldRefreshTokens(userEntity.Id);
 
@@ -53,6 +53,7 @@ namespace OnlineWatchShop.Web.Implementations
 			{
 				AccessToken = accessToken,
 				RefreshToken = refreshToken.Token,
+				UserId = userEntity.Id,
 				Username = userEntity.Login,
 				AccessTokenExpiry = DateTime.Now.AddMinutes(10)
 			};
@@ -75,7 +76,7 @@ namespace OnlineWatchShop.Web.Implementations
 				RoleId = 2
 			};
 
-			_dbRepository.Add(newUserEntity);
+			await _dbRepository.Add(newUserEntity);
 			await _dbRepository.SaveChangesAsync();
 
 			return true;
@@ -100,7 +101,7 @@ namespace OnlineWatchShop.Web.Implementations
 			var newRefreshToken = RotateRefreshToken(refreshToken, ipAddress);
 			newRefreshToken.UserId = userEntity.Id;
 
-			_dbRepository.Add(newRefreshToken);
+			await _dbRepository.Add(newRefreshToken);
 
 			await RemoveOldRefreshTokens(userEntity.Id);
 
@@ -120,7 +121,8 @@ namespace OnlineWatchShop.Web.Implementations
 		public void RevokeToken(string token, string ipAddress)
 		{
 			var refreshToken = _dbRepository.GetAll<RefreshTokenEntity>()
-				.ToList().Single(t => t.Token == token);
+				.ToList()
+				.Single(t => t.Token == token);
 
 			if (!refreshToken.IsActive)
 				throw new Exception("Invalid token");
@@ -133,8 +135,10 @@ namespace OnlineWatchShop.Web.Implementations
 
 		public UserEntity GetById(int id)
 		{
-			var user = _dbRepository.Get<UserEntity>(u => u.Id == id)
-				.FirstOrDefault();
+			var user = _dbRepository.GetAllInclude<UserEntity>(u => u.Role)
+			.Where(u => u.Id == id)
+			.FirstOrDefault();
+
 			if (user == null) throw new KeyNotFoundException("User not found");
 			return user;
 		}

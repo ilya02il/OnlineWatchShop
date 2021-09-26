@@ -16,12 +16,7 @@ namespace OnlineWatchShop.DAL.Implementations.Configurations
 				new RoleEntity()
 				{
 					Id = 2,
-					Name = "AuthorizedUser"
-				},
-				new RoleEntity()
-				{
-					Id = 3,
-					Name = "NonAuthorizedUser"
+					Name = "User"
 				});
 		}
 	}

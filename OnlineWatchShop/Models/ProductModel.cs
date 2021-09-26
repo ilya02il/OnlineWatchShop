@@ -1,5 +1,4 @@
-﻿using OnlineWatchShop.DAL.Contracts.Entities;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace OnlineWatchShop.Web.Models
 {
@@ -15,6 +14,8 @@ namespace OnlineWatchShop.Web.Models
 		public int Warranty { get; set; }
 		public string TargetGender { get; set; }
 
-		public ICollection<OrderProductEntity> OrderProduct { get; set; }
+		public int Amount { get; set; }
+
+		public ICollection<ImageModel> Images { get; set; }
 	}
 }

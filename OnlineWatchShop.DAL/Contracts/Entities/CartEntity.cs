@@ -2,17 +2,17 @@
 
 namespace OnlineWatchShop.DAL.Contracts.Entities
 {
-	public class OrderEntity : IEntity
+	public class CartEntity : IEntity
 	{
 		public int Id { get; set; }
 
 		public int UserId { get; set; }
 		public UserEntity User { get; set; }
 
-		public ICollection<OrderProductEntity> OrderProducts
+		public ICollection<CartProductEntity> CartProducts
 		{
 			get;
 			set;
-		} = new List<OrderProductEntity>();
+		} = new List<CartProductEntity>();
 	}
 }

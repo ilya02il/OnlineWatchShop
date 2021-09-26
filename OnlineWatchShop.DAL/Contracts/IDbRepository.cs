@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace OnlineWatchShop.DAL.Contracts
 {
@@ -13,8 +14,8 @@ namespace OnlineWatchShop.DAL.Contracts
 		IQueryable<T> GetAllInclude<T>(params Expression<Func<T, object>>[] includeExpressions)
 			where T : class, IEntity;
 
-		int Add<T>(T newEntity) where T : class, IEntity;
-		//Task AddRange<T>(IEnumerable<T> newEntities) where T : class, IEntity;
+		Task<int> Add<T>(T newEntity) where T : class, IEntity;
+		Task AddRange<T>(IEnumerable<T> newEntities) where T : class, IEntity;
 
 		//Task Delete<T>(int entityId) where T : class, IEntity;
 
@@ -23,7 +24,7 @@ namespace OnlineWatchShop.DAL.Contracts
 		//Task RemoveRange<T>(IEnumerable<T> entities) where T : class, IEntity;
 
 		Task Update<T>(T entity) where T : class, IEntity;
-		//Task UpdateRange<T>(IEnumerable<T> entities) where T : class, IEntity;
+		Task UpdateRange<T>(IEnumerable<T> entities) where T : class, IEntity;
 
 		Task<int> SaveChangesAsync();
 		int SaveChanges();

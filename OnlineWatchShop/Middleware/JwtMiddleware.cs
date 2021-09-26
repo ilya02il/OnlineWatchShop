@@ -20,7 +20,6 @@ namespace OnlineWatchShop.Web.Middleware
 			var userId = jwtUtils.ValidateJwtToken(token);
 			if (userId != null)
 			{
-				// attach user to context on successful jwt validation
 				context.Items["User"] = accountService.GetById(userId.Value);
 			}
 

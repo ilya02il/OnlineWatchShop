@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OnlineWatchShop.DAL.Implementations;
 
 namespace OnlineWatchShop.DAL.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20210926063433_AttachPersonalDataToUser")]
+    partial class AttachPersonalDataToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -88,12 +90,12 @@ namespace OnlineWatchShop.DAL.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("UserId")
+                    b.Property<int>("PersonId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("PersonId");
 
                     b.ToTable("Orders");
                 });
@@ -336,13 +338,13 @@ namespace OnlineWatchShop.DAL.Migrations
 
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.OrderEntity", b =>
                 {
-                    b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.UserEntity", "User")
+                    b.HasOne("OnlineWatchShop.DAL.Contracts.Entities.PersonalDataEntity", "Person")
                         .WithMany("Orders")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("PersonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.OrderProductEntity", b =>
@@ -407,6 +409,11 @@ namespace OnlineWatchShop.DAL.Migrations
                     b.Navigation("OrderProducts");
                 });
 
+            modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.PersonalDataEntity", b =>
+                {
+                    b.Navigation("Orders");
+                });
+
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.ProductEntity", b =>
                 {
                     b.Navigation("CartProducts");
@@ -423,8 +430,6 @@ namespace OnlineWatchShop.DAL.Migrations
 
             modelBuilder.Entity("OnlineWatchShop.DAL.Contracts.Entities.UserEntity", b =>
                 {
-                    b.Navigation("Orders");
-
                     b.Navigation("PersonalData");
 
                     b.Navigation("RefreshTokens");

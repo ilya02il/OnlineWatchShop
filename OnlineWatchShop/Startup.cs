@@ -12,6 +12,7 @@ using OnlineWatchShop.Web.Helpers;
 using OnlineWatchShop.Web.Implementations;
 using OnlineWatchShop.Web.Middleware;
 using OnlineWatchShop.Web.Profiles;
+using VueCliMiddleware;
 
 namespace OnlineWatchShop.Web
 {
@@ -27,40 +28,16 @@ namespace OnlineWatchShop.Web
 		{
 			services.AddControllers();
 
+			//services.AddSpaStaticFiles(configuration =>
+			//{
+			//	configuration.RootPath = "ClientApp";
+			//});
+
 			services.AddDbContext<DataContext>(options =>
-				options.UseSqlServer(_configuration.GetConnectionString("DefaultString")),
+				options.UseSqlServer(_configuration.GetConnectionString("LocalHostConnection")),
 				ServiceLifetime.Transient);
 
-			//var jwtConfigurationSection = _configuration.GetSection("JwtConfiguration");
 			services.Configure<JwtConfiguration>(_configuration.GetSection("JwtConfiguration"));
-
-			//var jwtConfiguration = jwtConfigurationSection.Get<JwtConfiguration>();
-			//var key = Encoding.ASCII.GetBytes(jwtConfiguration.Key);
-
-			//services.AddAuthentication(options =>
-			//	{
-			//		options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-			//		options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-			//	})
-			//	//.AddCookie(options =>
-			//	//	{
-			//	//		options.LoginPath = "/api/login";
-			//	//		//options.AccessDeniedPath = "api/forbidden";
-			//	//	}
-			//	//)
-			//	.AddJwtBearer(options =>
-			//		{
-			//			options.RequireHttpsMetadata = false;
-			//			options.SaveToken = true;
-			//			options.TokenValidationParameters = new TokenValidationParameters
-			//			{
-			//				ValidateIssuerSigningKey = true,
-			//				IssuerSigningKey = new SymmetricSecurityKey(key),
-			//				ValidateIssuer = false,
-			//				ValidateAudience = false
-			//			};
-			//		}
-			//	);
 
 			var mapperConfig = new MapperConfiguration(mc =>
 			{
@@ -70,32 +47,41 @@ namespace OnlineWatchShop.Web
 			var mapper = mapperConfig.CreateMapper();
 
 			services.AddSingleton(mapper);
+			services.AddTransient<IJwtUtils, JwtUtils>();
 			services.AddTransient<IAccountService, AccountService>();
 			services.AddTransient<IProductService, ProductService>();
-			services.AddTransient<IJwtUtils, JwtUtils>();
+			services.AddTransient<ICartService, CartService>();
+			services.AddTransient<IOrderService, OrderService>();
+			services.AddTransient<IUserService, UserService>();
 			services.AddScoped<IDbRepository, DbRepository>();
-			//services.AddSwaggerGen(c =>
-			//{
-			//	c.SwaggerDoc("v1", new OpenApiInfo { Title = "OnlineWatchShop", Version = "v1" });
-			//});
 		}
 
-		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
 		{
 			if (env.IsDevelopment())
 			{
-				app.UseDeveloperExceptionPage(); 
-				//app.UseSwagger();
-				//app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "OnlineWatchShop v1"));
+				app.UseDeveloperExceptionPage();
 			}
 
-			//app.UseHttpsRedirection();
+			app.UseCors(x => x
+				.AllowAnyOrigin()
+				.AllowAnyMethod()
+				.AllowAnyHeader());
+
+			app.UseHsts();
+
+			//app.UseSpa(spa =>
+			//{
+			//	if (env.IsDevelopment())
+			//		spa.Options.SourcePath = "ClientApp/";
+			//	else
+			//		spa.Options.SourcePath = "dist";
+
+			//	if (env.IsDevelopment())
+			//		spa.UseVueCli();
+			//});
 
 			app.UseRouting();
-
-			//app.UseAuthentication();
-			//app.UseAuthorization();
 
 			app.UseMiddleware<JwtMiddleware>();
 
